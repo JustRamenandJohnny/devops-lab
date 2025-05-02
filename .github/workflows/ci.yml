@@ -15,28 +15,15 @@ jobs:
         with:
           node-version: '18'
       
-      # Этап BUILD для сервера
-      - name: Build server
-        run: |
-          cd server
-          npm install
-          npm run build  # Если есть скрипт build в package.json
       
-      # Этап TEST для сервера
-      - name: Test server
-        run: |
-          cd server
-          npm test
+      - name: Build and test server
+          run: |
+            cd server
+            npm run build # Теперь это включает и тесты
       
-      # Этап BUILD для клиента
-      - name: Build client
+      - name: Build and test client
         run: |
           cd client
           npm install
           npm run build
-      
-      # Этап TEST для клиента
-      - name: Test client
-        run: |
-          cd client
           npm test
