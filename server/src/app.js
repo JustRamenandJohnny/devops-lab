@@ -61,7 +61,7 @@ function validateBook(book) {
   return errors;
 }
 
-// GET /books - Получить все книги
+
 app.get('/books', (req, res) => {
   db.all("SELECT * FROM books", [], (err, rows) => {
     if (err) {
@@ -71,7 +71,7 @@ app.get('/books', (req, res) => {
   });
 });
 
-// POST /books - Добавить новую книгу
+
 app.post('/books', (req, res) => {
   const book = req.body;
   const errors = validateBook(book);
@@ -95,7 +95,7 @@ app.post('/books', (req, res) => {
   );
 });
 
-// PUT /books/:id - Обновить книгу
+
 app.put('/books/:id', (req, res) => {
   const id = req.params.id;
   const book = req.body;
@@ -120,7 +120,7 @@ app.put('/books/:id', (req, res) => {
   );
 });
 
-// DELETE /books/:id - Удалить книгу
+
 app.delete('/books/:id', (req, res) => {
   const id = req.params.id;
   db.run(
@@ -138,21 +138,21 @@ app.delete('/books/:id', (req, res) => {
   );
 });
 
-// Обработка 404
+
 app.use((req, res) => {
   res.status(404).json({ error: "Маршрут не найден" });
 });
 
-// Обработка ошибок
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Что-то пошло не так!" });
 });
 
-// Запуск сервера
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Сервер библиотеки запущен на http://localhost:${PORT}`);
 });
 
-module.exports = app; // Для тестирования
+module.exports = app; // Для тест

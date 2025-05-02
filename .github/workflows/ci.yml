@@ -6,24 +6,37 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      # Шаг 1: Загружаем код
+      # Загружаем код
       - uses: actions/checkout@v2
       
-      # Шаг 2: Устанавливаем Node.js
+      # Устанавливаем Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
           node-version: '18'
       
       
-      - name: Build and test server
-          run: |
-            cd server
-            npm run build # Теперь это включает и тесты
+      - name: Build server
+        run: |
+          cd server
+          npm install
+          npm run build  # Если есть скрипт build в package.json
       
-      - name: Build and test client
+      
+      - name: Test server
+        run: |
+          cd server
+          npm test
+      
+      
+      - name: Build client
         run: |
           cd client
           npm install
           npm run build
+      
+      
+      - name: Test client
+        run: |
+          cd client
           npm test
