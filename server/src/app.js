@@ -155,4 +155,4 @@ app.listen(PORT, () => {
   console.log(`Сервер библиотеки запущен на http://localhost:${PORT}`);
 });
 
-module.exports = app; // Для тест
+module.exports = { app, db };

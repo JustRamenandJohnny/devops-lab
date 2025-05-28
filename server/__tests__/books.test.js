@@ -1,49 +1,44 @@
 const request = require('supertest');
-const app = require('../src/app');
+const { app, db } = require('../src/app'); // Импорт и app, и db
+
 let server;
 
 beforeAll(done => {
-  server = app.listen(3008, done);
+  server = app.listen(0, done); // 0 = динамический порт, чтобы избежать EADDRINUSE
 });
 
 afterAll(done => {
-  server.close(done);
-  // Если есть база с методом close, добавь её здесь, например:
-  // db.close();
+  server.close(() => {
+    db.close(); // Закрытие базы данных
+    done();
+  });
 });
 
 describe('Тестирование REST API /books', () => {
-  let createdBookId;
-
-  it('GET /books — должен вернуть массив книг', async () => {
+  test('GET /books — должен вернуть массив книг', async () => {
     const res = await request(server).get('/books');
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
 
-  it('POST /books — должен добавить новую книгу', async () => {
-    const res = await request(server).post('/books').send({
-      title: 'Тестовая книга',
-      author: 'Автор Тестов',
-      year: 2024
-    });
+  test('POST /books — должен добавить новую книгу', async () => {
+    const newBook = { title: "Новая книга", author: "Автор", year: 2024 };
+    const res = await request(server).post('/books').send(newBook);
     expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty('id');
-    createdBookId = res.body.id;
+    expect(res.body.title).toBe(newBook.title);
   });
 
-  it('PUT /books/:id — должен обновить книгу', async () => {
-    const res = await request(server).put(`/books/${createdBookId}`).send({
-      title: 'Обновлено',
-      author: 'Автор Обновлён',
-      year: 2025
-    });
+  test('PUT /books/:id — должен обновить книгу', async () => {
+    const update = { title: "Обновлено", author: "Автор", year: 2025 };
+    const created = await request(server).post('/books').send({ title: "X", author: "Y", year: 2000 });
+    const res = await request(server).put(`/books/${created.body.id}`).send(update);
     expect(res.statusCode).toBe(200);
-    expect(res.body.title).toBe('Обновлено');
+    expect(res.body.title).toBe(update.title);
   });
 
-  it('DELETE /books/:id — должен удалить книгу', async () => {
-    const res = await request(server).delete(`/books/${createdBookId}`);
+  test('DELETE /books/:id — должен удалить книгу', async () => {
+    const created = await request(server).post('/books').send({ title: "X", author: "Y", year: 2000 });
+    const res = await request(server).delete(`/books/${created.body.id}`);
     expect(res.statusCode).toBe(204);
   });
 });
