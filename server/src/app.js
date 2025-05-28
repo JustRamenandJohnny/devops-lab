@@ -61,7 +61,6 @@ function validateBook(book) {
   return errors;
 }
 
-
 app.get('/books', (req, res) => {
   db.all("SELECT * FROM books", [], (err, rows) => {
     if (err) {
@@ -70,7 +69,6 @@ app.get('/books', (req, res) => {
     res.json(rows);
   });
 });
-
 
 app.post('/books', (req, res) => {
   const book = req.body;
@@ -88,13 +86,12 @@ app.post('/books', (req, res) => {
         return res.status(500).json({ error: err.message });
       }
       res.status(201).json({
-        id: this.lastID,
-        ...book
+        ...book,
+        id: this.lastID // ✅ исправлено: id в конец, чтобы не перезаписался
       });
     }
   );
 });
-
 
 app.put('/books/:id', (req, res) => {
   const id = req.params.id;
@@ -120,7 +117,6 @@ app.put('/books/:id', (req, res) => {
   );
 });
 
-
 app.delete('/books/:id', (req, res) => {
   const id = req.params.id;
   db.run(
@@ -138,17 +134,14 @@ app.delete('/books/:id', (req, res) => {
   );
 });
 
-
 app.use((req, res) => {
   res.status(404).json({ error: "Маршрут не найден" });
 });
-
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Что-то пошло не так!" });
 });
-
 
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
@@ -156,6 +149,5 @@ if (require.main === module) {
     console.log(`Сервер библиотеки запущен на http://localhost:${PORT}`);
   });
 }
-
 
 module.exports = { app, db };
