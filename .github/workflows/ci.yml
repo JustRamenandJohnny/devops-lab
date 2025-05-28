@@ -52,7 +52,7 @@ jobs:
       - name: Run server tests
         run: |
           cd server
-          npm test -- --passWithNoTests
+          npm test
 
       # ===== ТЕСТЫ CLIENT =====
       - name: Install client dependencies
@@ -63,4 +63,4 @@ jobs:
       - name: Run client tests
         run: |
           cd client
-          npm test -- --passWithNoTests || echo "No tests in client"
+          npm test
