@@ -30,14 +30,14 @@ describe('Тестирование REST API /books', () => {
 
   test('PUT /books/:id — должен обновить книгу', async () => {
     const update = { title: "Обновлено", author: "Автор", year: 2025 };
-    const created = await request(server).post('/books').send({ title: "X", author: "Y", year: 2000 });
+    const created = await request(server).post('/books').send({ title: "XX", author: "YY", year: 2000 });
     const res = await request(server).put(`/books/${created.body.id}`).send(update);
     expect(res.statusCode).toBe(200);
     expect(res.body.title).toBe(update.title);
   });
 
   test('DELETE /books/:id — должен удалить книгу', async () => {
-    const created = await request(server).post('/books').send({ title: "X", author: "Y", year: 2000 });
+    const created = await request(server).post('/books').send({ title: "XX", author: "YY", year: 2000 });
     const res = await request(server).delete(`/books/${created.body.id}`);
     expect(res.statusCode).toBe(204);
   });
