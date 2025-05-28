@@ -150,9 +150,12 @@ app.use((err, req, res, next) => {
 });
 
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Сервер библиотеки запущен на http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Сервер библиотеки запущен на http://localhost:${PORT}`);
+  });
+}
+
 
 module.exports = { app, db };
