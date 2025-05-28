@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import './App.css';
 
 function App() {
   const [books, setBooks] = useState([]);
   const [newBook, setNewBook] = useState({ title: '', author: '', year: '' });
-  const [editBook, setEditBook] = useState(null); // { id, title, author, year } или null
+  const [editBook, setEditBook] = useState(null);
 
   useEffect(() => {
     fetchBooks();
@@ -13,8 +12,10 @@ function App() {
 
   const fetchBooks = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/books');
-      setBooks(response.data);
+      const response = await fetch('http://localhost:3000/books');
+      if (!response.ok) throw new Error('Ошибка сети');
+      const data = await response.json();
+      setBooks(data);
     } catch (error) {
       console.error('Ошибка загрузки книг:', error);
       alert('Ошибка загрузки книг');
@@ -23,9 +24,9 @@ function App() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewBook(prev => ({ 
-      ...prev, 
-      [name]: name === 'year' ? parseInt(value) || '' : value 
+    setNewBook(prev => ({
+      ...prev,
+      [name]: name === 'year' ? parseInt(value) || '' : value
     }));
   };
 
@@ -35,7 +36,12 @@ function App() {
       return;
     }
     try {
-      await axios.post('http://localhost:3000/books', newBook);
+      const response = await fetch('http://localhost:3000/books', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newBook)
+      });
+      if (!response.ok) throw new Error('Ошибка при добавлении книги');
       setNewBook({ title: '', author: '', year: '' });
       fetchBooks();
     } catch (error) {
@@ -45,24 +51,24 @@ function App() {
 
   const handleDeleteBook = async (id) => {
     try {
-      await axios.delete(`http://localhost:3000/books/${id}`);
+      const response = await fetch(`http://localhost:3000/books/${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Ошибка при удалении книги');
       fetchBooks();
     } catch (error) {
       console.error('Ошибка удаления книги:', error);
     }
   };
 
-  // Открыть форму редактирования
   const startEditing = (book) => {
-    setEditBook({ ...book }); // копируем книгу в состояние редактирования
+    setEditBook({ ...book });
   };
 
-  // Отмена редактирования
   const cancelEditing = () => {
     setEditBook(null);
   };
 
-  // Обработчик изменений в форме редактирования
   const handleEditChange = (e) => {
     const { name, value } = e.target;
     setEditBook(prev => ({
@@ -71,18 +77,22 @@ function App() {
     }));
   };
 
-  // Отправка обновлённой книги на сервер
   const submitEdit = async () => {
     if (!editBook.title || !editBook.author || !editBook.year) {
       alert('Заполните все поля для редактирования!');
       return;
     }
     try {
-      await axios.put(`http://localhost:3000/books/${editBook.id}`, {
-        title: editBook.title,
-        author: editBook.author,
-        year: editBook.year
+      const response = await fetch(`http://localhost:3000/books/${editBook.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editBook.title,
+          author: editBook.author,
+          year: editBook.year
+        })
       });
+      if (!response.ok) throw new Error('Ошибка обновления книги');
       setEditBook(null);
       fetchBooks();
     } catch (error) {
@@ -94,7 +104,6 @@ function App() {
     <div className="app">
       <h1>Библиотека</h1>
 
-      {/* Форма добавления */}
       <div className="form">
         <input
           name="title"
@@ -118,7 +127,6 @@ function App() {
         <button onClick={handleAddBook}>Добавить книгу</button>
       </div>
 
-      {/* Форма редактирования (показывается, если editBook !== null) */}
       {editBook && (
         <div className="form edit-form">
           <h2>Редактировать книгу</h2>
@@ -146,7 +154,6 @@ function App() {
         </div>
       )}
 
-      {/* Список книг */}
       <ul className="book-list">
         {books.map(book => (
           <li key={book.id}>
