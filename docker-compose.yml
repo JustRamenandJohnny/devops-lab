@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  server:
+    build: ./server
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server/library.db:/app/library.db
+    networks:
+      - devops-network
+    environment:
+      - NODE_ENV=production
+
+  client:
+    build: ./client
+    ports:
+      - "3001:3001"
+    networks:
+      - devops-network
+    depends_on:
+      - server
+    environment:
+      - REACT_APP_API_URL=http://localhost:3000
+
+networks:
+  devops-network:
+    driver: bridge

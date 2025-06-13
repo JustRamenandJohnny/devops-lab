@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 function App() {
   const [books, setBooks] = useState([]);
   const [newBook, setNewBook] = useState({ title: '', author: '', year: '' });
@@ -12,7 +14,7 @@ function App() {
 
   const fetchBooks = async () => {
     try {
-      const response = await fetch('http://localhost:3000/books');
+      const response = await fetch(`${API_URL}/books`);
       if (!response.ok) throw new Error('Ошибка сети');
       const data = await response.json();
       setBooks(data);
@@ -36,7 +38,7 @@ function App() {
       return;
     }
     try {
-      const response = await fetch('http://localhost:3000/books', {
+      const response = await fetch(`${API_URL}/books`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newBook)
@@ -51,7 +53,7 @@ function App() {
 
   const handleDeleteBook = async (id) => {
     try {
-      const response = await fetch(`http://localhost:3000/books/${id}`, {
+      const response = await fetch(`${API_URL}/books/${id}`, {
         method: 'DELETE'
       });
       if (!response.ok) throw new Error('Ошибка при удалении книги');
@@ -83,7 +85,7 @@ function App() {
       return;
     }
     try {
-      const response = await fetch(`http://localhost:3000/books/${editBook.id}`, {
+      const response = await fetch(`${API_URL}/books/${editBook.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

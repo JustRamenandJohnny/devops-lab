@@ -3,8 +3,21 @@ const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 
 const app = express();
+
+// Настройка CORS
+app.use(cors({
+  origin: ['http://localhost:3001', 'http://client:80'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
-app.use(cors());
+
+// Логирование запросов
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
 
 // Подключение к базе данных
 const db = new sqlite3.Database('./library.db', (err) => {
@@ -16,7 +29,7 @@ const db = new sqlite3.Database('./library.db', (err) => {
   }
 });
 
-// Инициализация БД (создание таблицы)
+// Инициализация БД
 function initializeDatabase() {
   db.run(`
     CREATE TABLE IF NOT EXISTS books (
@@ -29,19 +42,24 @@ function initializeDatabase() {
     if (err) {
       console.error('Ошибка создания таблицы:', err.message);
     } else {
-      // Добавляем тестовые данные, если таблица пуста
-      db.get("SELECT COUNT(*) as count FROM books", (err, row) => {
-        if (row.count === 0) {
-          db.run(
-            "INSERT INTO books (title, author, year) VALUES (?, ?, ?)",
-            ["1984", "Джордж Оруэлл", 1949]
-          );
-          db.run(
-            "INSERT INTO books (title, author, year) VALUES (?, ?, ?)",
-            ["Мастер и Маргарита", "Михаил Булгаков", 1967]
-          );
-        }
-      });
+      seedDatabase();
+    }
+  });
+}
+
+// Заполнение тестовыми данными
+function seedDatabase() {
+  db.get("SELECT COUNT(*) as count FROM books", (err, row) => {
+    if (row.count === 0) {
+      const initialBooks = [
+        ["1984", "Джордж Оруэлл", 1949],
+        ["Мастер и Маргарита", "Михаил Булгаков", 1967],
+        ["Преступление и наказание", "Фёдор Достоевский", 1866]
+      ];
+      
+      const stmt = db.prepare("INSERT INTO books (title, author, year) VALUES (?, ?, ?)");
+      initialBooks.forEach(book => stmt.run(book));
+      stmt.finalize();
     }
   });
 }
@@ -49,20 +67,28 @@ function initializeDatabase() {
 // Валидация данных книги
 function validateBook(book) {
   const errors = [];
-  if (!book.title || book.title.length < 2) {
+  const currentYear = new Date().getFullYear();
+  
+  if (!book.title || book.title.trim().length < 2) {
     errors.push("Название книги должно содержать минимум 2 символа");
   }
-  if (!book.author || book.author.length < 2) {
+  
+  if (!book.author || book.author.trim().length < 2) {
     errors.push("Имя автора должно содержать минимум 2 символа");
   }
-  if (!book.year || isNaN(book.year) || book.year < 0) {
-    errors.push("Год издания должен быть положительным числом");
+  
+  if (!book.year || isNaN(book.year)) {
+    errors.push("Год издания должен быть числом");
+  } else if (book.year < 1000 || book.year > currentYear + 5) {
+    errors.push(`Год издания должен быть между 1000 и ${currentYear + 5}`);
   }
+  
   return errors;
 }
 
+// Роуты
 app.get('/books', (req, res) => {
-  db.all("SELECT * FROM books", [], (err, rows) => {
+  db.all("SELECT * FROM books ORDER BY title", [], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -80,14 +106,16 @@ app.post('/books', (req, res) => {
 
   db.run(
     "INSERT INTO books (title, author, year) VALUES (?, ?, ?)",
-    [book.title, book.author, book.year],
+    [book.title.trim(), book.author.trim(), book.year],
     function(err) {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
       res.status(201).json({
-        ...book,
-        id: this.lastID // ✅ исправлено: id в конец, чтобы не перезаписался
+        id: this.lastID,
+        title: book.title,
+        author: book.author,
+        year: book.year
       });
     }
   );
@@ -104,7 +132,7 @@ app.put('/books/:id', (req, res) => {
 
   db.run(
     "UPDATE books SET title = ?, author = ?, year = ? WHERE id = ?",
-    [book.title, book.author, book.year, id],
+    [book.title.trim(), book.author.trim(), book.year, id],
     function(err) {
       if (err) {
         return res.status(500).json({ error: err.message });
@@ -134,20 +162,20 @@ app.delete('/books/:id', (req, res) => {
   );
 });
 
+// Обработка ошибок
 app.use((req, res) => {
   res.status(404).json({ error: "Маршрут не найден" });
 });
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: "Что-то пошло не так!" });
+  res.status(500).json({ error: "Внутренняя ошибка сервера" });
 });
 
-if (require.main === module) {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`Сервер библиотеки запущен на http://localhost:${PORT}`);
-  });
-}
+// Запуск сервера
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Сервер библиотеки запущен на http://localhost:${PORT}`);
+});
 
 module.exports = { app, db };
